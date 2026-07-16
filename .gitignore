@@ -1,0 +1,17 @@
+# deps / build output
+node_modules/
+dist/
+
+# local env / secrets (keep the example)
+.env
+.env.*
+!.env.example
+
+# large basemap tiles — only the ~8 MB overlays are force-added for the deploy
+# (world.pmtiles / slovakia.pmtiles stay local; the hosted build uses Protomaps)
+*.pmtiles
+
+# not part of the public deploy repo (client brief + data-prep pipeline & its
+# scraped RA address data / PDFs live only in the local working copy)
+/data-prep/
+/BRIEF.md

@@ -1,0 +1,125 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Panel/popup theming — driven by <html data-theme="light|dark"> (set in main.ts
+   to match the chosen basemap flavor). */
+:root {
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-fg: #1a1a1a;
+  --panel-border: #ccc;
+  --sep: #ddd;
+  --muted: #888;
+}
+
+:root[data-theme="dark"] {
+  --panel-bg: rgba(30, 33, 38, 0.92);
+  --panel-fg: #e8eaed;
+  --panel-border: #4a4f57;
+  --sep: #454b54;
+  --muted: #9aa0a6;
+}
+
+/* --- Control panel -------------------------------------------------------- */
+.layer-panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  background: var(--panel-bg);
+  color: var(--panel-fg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font:
+    13px / 1.5 system-ui,
+    sans-serif;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.layer-panel label {
+  display: block;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* A titled group separated from the one above by a rule. */
+.panel-group {
+  margin-top: 6px;
+  border-top: 1px solid var(--sep);
+  padding-top: 6px;
+}
+
+.panel-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+/* --- Legend --------------------------------------------------------------- */
+.legend {
+  margin: 4px 0 6px;
+  border-bottom: 1px solid var(--sep);
+  padding-bottom: 6px;
+}
+
+.legend-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.legend-note {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Gradient background is set inline (computed from the ramp stops). */
+.legend-bar {
+  height: 10px;
+  border-radius: 2px;
+  margin: 3px 0;
+}
+
+.legend-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* --- Popup ---------------------------------------------------------------- */
+.muted {
+  color: var(--muted);
+}
+
+.popup-sep {
+  margin: 5px 0;
+  border: none;
+  border-top: 1px solid var(--sep);
+}
+
+:root[data-theme="dark"] .maplibregl-popup-content {
+  background: #23272e;
+  color: #e8eaed;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="dark"] .maplibregl-popup-content code {
+  color: #ffd479;
+}
+
+:root[data-theme="dark"] .maplibregl-popup-tip {
+  border-top-color: #23272e;
+  border-bottom-color: #23272e;
+}
+
+:root[data-theme="dark"] .maplibregl-popup-close-button {
+  color: #e8eaed;
+}
