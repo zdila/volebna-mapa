@@ -11,7 +11,13 @@ dist/
 # (world.pmtiles / slovakia.pmtiles stay local; the hosted build uses Protomaps)
 *.pmtiles
 
-# not part of the public deploy repo (client brief + data-prep pipeline & its
-# scraped RA address data / PDFs live only in the local working copy)
-/data-prep/
+# data-prep: the PIPELINE is tracked (parsers, checks, JOSM style + plugin, docs
+# — ~1 MB of source), its INPUTS are not. data/ is 890 MB of scraped Register
+# adries extracts, source PDFs, the working GeoJSONs and their backups; none of
+# that belongs in a public deploy repo and none of it is hand-written.
+/data-prep/data/
+/data-prep/scratch_ke/
+/data-prep/josm/plugin/build/
+
+# client brief
 /BRIEF.md

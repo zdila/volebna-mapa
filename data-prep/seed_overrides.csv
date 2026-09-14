@@ -1,0 +1,12 @@
+ra_id,action,lon,lat,city,street,number,reason
+13460447,exclude,,,kosice,Cimborkova,29,RA coordinate ~3km SW of the real street (21.2155/48.7269 vs cluster ~21.255/48.735); address absent from OSM so cannot reposition -> excluded
+13488486,exclude,,,kosice,Ulica Zelený dvor,1,user-requested ignore
+5407018529,exclude,,,presov,Vranovská,70,user-requested ignore
+7103402999,exclude,,,presov,Priemyselná,6,user-requested ignore
+6701039191,exclude,,,presov,Vranovská,72,user-requested ignore
+7001416059,exclude,,,presov,Na Tablách,1,user-requested ignore
+10660507,exclude,,,presov,Na Tablách,3,user-requested ignore
+7101981436,exclude,,,presov,Levočská,162,user-requested ignore
+7101363401,exclude,,,presov,Petrovianska,1A,user-requested ignore
+10120121,move,18.05380,48.35560,nitra,Pod kostolíkom,28,RA coordinate ~3km NE outlier (18.0909/48.3728); rest of street clusters ~18.0535/48.3555 in okrsok 50 -> moved into the cluster between neighbours #24 and #29
+3622927,move,18.72067,49.20362,zilina,Osvety,14,RA coordinate ~4.4km E outlier (18.7803/49.2062); rest of Osvety (okrsok 55) clusters ~18.7206/49.2036 -> moved between even-side neighbours #12 and #14A (confirmed vs OSM)

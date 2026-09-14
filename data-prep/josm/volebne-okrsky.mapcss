@@ -1,0 +1,293 @@
+/*
+  Volebné okrsky — JOSM editing style
+  ===================================
+
+  For the files written by `node src/exportOkrskyJosm.ts <mc>`, which hold three kinds of feature,
+  each tagged `kind`:
+
+      kind=okrsok      the precinct polygon      (okrsok, mcnorm?, src=derived|manual)
+      kind=seed        an address point that MATCHED into that precinct   (okrsok, street, …)
+      kind=unmatched   an address point that did NOT match  (reason=no-street|no-number|ambiguous)
+
+  Install: Preferences (F12) > Map Paint Styles > + > this file.
+  Turn OFF the other active styles, or their defaults will paint over these.
+  The options below are per-style: right-click the style in that list, or use the gear icon.
+
+  The point of the colouring
+  --------------------------
+  A seed is drawn in the colour of the okrsok it was ASSIGNED to, using the same hue formula as
+  the polygon. So a correctly-derived precinct is one solid colour, and a point whose colour
+  differs from the area it sits in is exactly the thing worth looking at — either the address
+  matched the wrong okrsok, or the border needs moving. Unmatched points are deliberately loud.
+
+  The hue is the same golden-angle formula the web map uses (okrsok * 137.508°), so a precinct
+  keeps the same colour here as it has in the app.
+*/
+
+meta {
+  title: "Volebné okrsky (editing)";
+  description: "Okrsok polygons + their address points: colour by okrsok or by mestská časť, semi-transparent fills, unmatched points highlighted.";
+  version: "1.0";
+  min-josm-version: "18000";
+}
+
+/* ------------------------------------------------------------------ settings */
+
+setting::color_by_mc {
+  type: boolean;
+  label: "Colour by mestská časť (instead of by okrsok)";
+  default: false;
+}
+
+setting::fill_areas {
+  type: boolean;
+  label: "Fill okrsok areas";
+  default: true;
+}
+
+setting::show_seeds {
+  type: boolean;
+  label: "Show address points";
+  default: true;
+}
+
+setting::only_unmatched {
+  type: boolean;
+  label: "Show ONLY unmatched address points";
+  default: false;
+}
+
+setting::labels {
+  type: boolean;
+  label: "Label okrsok numbers";
+  default: true;
+}
+
+setting::point_labels {
+  type: boolean;
+  label: "Label address points (street + number)";
+  default: false;
+}
+
+/* --------------------------------------------------------- okrsok polygons */
+
+/* Base: border only, so the underlying imagery stays readable. `area` matches both a closed way
+   and a multipolygon relation — a multipart okrsok arrives as the latter. */
+area[kind=okrsok],
+way[kind=okrsok] {
+  width: 2;
+  color: hsb_color(mod(to_double(tag("okrsok")) * 137.508, 360) / 360, 0.72, 0.62);
+  casing-width: 1;
+  casing-color: #ffffff;
+  casing-opacity: 0.55;
+  z-index: 10;
+}
+
+/* Semi-transparent fill: low enough to read the map underneath, strong enough to tell precincts
+   apart at a glance. */
+area[kind=okrsok][setting("fill_areas")] {
+  fill-color: hsb_color(mod(to_double(tag("okrsok")) * 137.508, 360) / 360, 0.62, 0.84);
+  fill-opacity: 0.22;
+}
+
+/* A hand-edited precinct is marked so you can see at a glance what you have already touched. */
+area[kind=okrsok][src=manual],
+way[kind=okrsok][src=manual] {
+  width: 4;
+  dashes: 10, 4;
+}
+
+/* text-position:center keeps the number at the centroid. Without it a closed way carries both a
+   line style and an area style from the same cascade, and the label is drawn TWICE — once at the
+   centre and once running along the border. */
+area[kind=okrsok][setting("labels")] {
+  text: "okrsok";
+  text-position: center;
+  font-size: 15;
+  font-weight: bold;
+  text-color: #101010;
+  text-halo-color: #ffffff;
+  text-halo-radius: 2.5;
+}
+
+/* ------------------------------------------------------- address points */
+
+/* Seeds carry their okrsok, so they get the SAME hue as the precinct they belong to. */
+node[kind=seed][setting("show_seeds")]!.hide_seed {
+  symbol-shape: circle;
+  symbol-size: 7;
+  symbol-fill-color: hsb_color(mod(to_double(tag("okrsok")) * 137.508, 360) / 360, 0.75, 0.80);
+  symbol-fill-opacity: 0.95;
+  symbol-stroke-color: #ffffff;
+  symbol-stroke-width: 1;
+  z-index: 20;
+}
+
+/* "Show only unmatched" hides the matched ones without touching the filter panel. */
+node[kind=seed][setting("only_unmatched")] {
+  symbol-size: 0;
+  symbol-stroke-width: 0;
+  text: none;
+}
+
+/* Unmatched: loud, larger triangle — impossible to confuse with a seed at any zoom.
+   These are the addresses the derivation could not place, so they are where a wrong border
+   usually shows up first. */
+node[kind=unmatched] {
+  symbol-shape: triangle;
+  symbol-size: 15;
+  symbol-fill-color: #ff1f5a;
+  symbol-fill-opacity: 0.95;
+  symbol-stroke-color: #ffffff;
+  symbol-stroke-width: 2;
+  z-index: 30;
+}
+
+/* Addresses of the SURROUNDING municipalities (addNeighbourSeeds.ts). Never part of this city, so
+   they are drawn as a small hollow grey square: present for orientation, visually inert, and
+   impossible to mistake for a seed. Any of these INSIDE a precinct is a real error — checkFile
+   tags it fixme=outside-address-inside-precinct, and the fixme rule below makes it loud. */
+node[kind=neighbour] {
+  symbol-shape: square;
+  symbol-size: 6;
+  symbol-fill-opacity: 0;
+  symbol-stroke-color: #9aa0a6;
+  symbol-stroke-width: 1;
+  z-index: 10;
+}
+
+/* Tell the three failure reasons apart: the fix differs for each.
+     no-street  the street name is absent from the assignment (or spelled differently)
+     no-number  the street is there, but this house number is not in any range
+     ambiguous  two okrsky both claim this house */
+node[kind=unmatched][reason=no-number] { symbol-fill-color: #ff8c00; }
+node[kind=unmatched][reason=ambiguous] { symbol-fill-color: #b026ff; }
+
+node[kind=unmatched][setting("labels")] {
+  text: "reason";
+  font-size: 11;
+  text-color: #8a0030;
+  text-halo-color: #ffffff;
+  text-halo-radius: 2;
+  text-offset-y: 12;
+}
+
+node[kind=seed][setting("point_labels")],
+node[kind=unmatched][setting("point_labels")] {
+  text: "name";
+  font-size: 11;
+  text-color: #202020;
+  text-halo-color: #ffffff;
+  text-halo-radius: 2;
+  text-offset-y: -10;
+}
+
+/* ------------------------------------------- colour by mestská časť instead */
+
+/* Only Košice keeps several mestské časti in one file (its okrsok numbers restart in each), so
+   this mode is what makes a Košice export readable: every MČ becomes one flat colour and the
+   MČ borders stand out. Elsewhere the export has no mcnorm tag and this mode leaves the
+   okrsok colouring alone. */
+area[kind=okrsok][setting("color_by_mc")][mcnorm],
+way[kind=okrsok][setting("color_by_mc")][mcnorm]        { color: #777777; }
+area[kind=okrsok][setting("color_by_mc")][mcnorm]       { fill-color: #777777; }
+node[kind=seed][setting("color_by_mc")][mcnorm]         { symbol-fill-color: #777777; }
+
+@supports (min-josm-version: 18000) {
+  /* MapCSS has no string-hash function, so the palette is explicit — 22 well-spread hues, one
+     per Košice mestská časť. Rules are repeated for area / way / seed so a point always matches
+     the MČ it sits in. */
+  *[setting("color_by_mc")][mcnorm="stare mesto"]          { color: #e6194b; fill-color: #e6194b; symbol-fill-color: #e6194b; }
+  *[setting("color_by_mc")][mcnorm="zapad"]                { color: #3cb44b; fill-color: #3cb44b; symbol-fill-color: #3cb44b; }
+  *[setting("color_by_mc")][mcnorm="sever"]                { color: #4363d8; fill-color: #4363d8; symbol-fill-color: #4363d8; }
+  *[setting("color_by_mc")][mcnorm="juh"]                  { color: #f58231; fill-color: #f58231; symbol-fill-color: #f58231; }
+  *[setting("color_by_mc")][mcnorm="nad jazerom"]          { color: #911eb4; fill-color: #911eb4; symbol-fill-color: #911eb4; }
+  *[setting("color_by_mc")][mcnorm="dargovskych hrdinov"]  { color: #46f0f0; fill-color: #46f0f0; symbol-fill-color: #46f0f0; }
+  *[setting("color_by_mc")][mcnorm="sidlisko kvp"]         { color: #f032e6; fill-color: #f032e6; symbol-fill-color: #f032e6; }
+  *[setting("color_by_mc")][mcnorm="sidlisko tahanovce"]   { color: #bcf60c; fill-color: #bcf60c; symbol-fill-color: #bcf60c; }
+  *[setting("color_by_mc")][mcnorm="tahanovce"]            { color: #008080; fill-color: #008080; symbol-fill-color: #008080; }
+  *[setting("color_by_mc")][mcnorm="barca"]                { color: #9a6324; fill-color: #9a6324; symbol-fill-color: #9a6324; }
+  *[setting("color_by_mc")][mcnorm="saca"]                 { color: #800000; fill-color: #800000; symbol-fill-color: #800000; }
+  *[setting("color_by_mc")][mcnorm="krasna"]               { color: #808000; fill-color: #808000; symbol-fill-color: #808000; }
+  *[setting("color_by_mc")][mcnorm="vysne opatske"]        { color: #000075; fill-color: #000075; symbol-fill-color: #000075; }
+  *[setting("color_by_mc")][mcnorm="kosicka nova ves"]     { color: #e6beff; fill-color: #e6beff; symbol-fill-color: #e6beff; }
+  *[setting("color_by_mc")][mcnorm="myslava"]              { color: #aaffc3; fill-color: #aaffc3; symbol-fill-color: #aaffc3; }
+  *[setting("color_by_mc")][mcnorm="peres"]                { color: #ffd8b1; fill-color: #ffd8b1; symbol-fill-color: #ffd8b1; }
+  *[setting("color_by_mc")][mcnorm="lunik ix"]             { color: #fabebe; fill-color: #fabebe; symbol-fill-color: #fabebe; }
+  *[setting("color_by_mc")][mcnorm="polov"]                { color: #fffac8; fill-color: #fffac8; symbol-fill-color: #fffac8; }
+  *[setting("color_by_mc")][mcnorm="lorincik"]             { color: #a9a9a9; fill-color: #a9a9a9; symbol-fill-color: #a9a9a9; }
+  *[setting("color_by_mc")][mcnorm="sebastovce"]           { color: #ffe119; fill-color: #ffe119; symbol-fill-color: #ffe119; }
+  *[setting("color_by_mc")][mcnorm="kavecany"]             { color: #42d4f4; fill-color: #42d4f4; symbol-fill-color: #42d4f4; }
+  *[setting("color_by_mc")][mcnorm="dzungla"]              { color: #f7b6d2; fill-color: #f7b6d2; symbol-fill-color: #f7b6d2; }
+}
+
+/* Unmatched points keep their alarm colours in every mode — they are never "just another MČ". */
+node[kind=unmatched][setting("color_by_mc")]              { symbol-fill-color: #ff1f5a; }
+node[kind=unmatched][reason=no-number][setting("color_by_mc")] { symbol-fill-color: #ff8c00; }
+node[kind=unmatched][reason=ambiguous][setting("color_by_mc")] { symbol-fill-color: #b026ff; }
+
+/* --------------------------------------------- seed diff (exportSeedDiff.ts) */
+
+/* Points from data/edit/<mc>_seed_diff.geojson, opened as a second layer while editing. Same
+   okrsok fill as any seed — what changed is the OUTLINE, so the precinct colour still reads.
+     change=new    was unmatched, now seeds this okrsok (a border near a cluster was drawn blind)
+     change=moved  matched before, now a DIFFERENT okrsok (influence moved between two precincts) */
+node[kind=seed][change=new] {
+  symbol-size: 12;
+  symbol-stroke-color: #00b050;
+  symbol-stroke-width: 3;
+  z-index: 40;
+}
+
+node[kind=seed][change=moved] {
+  symbol-size: 12;
+  symbol-stroke-color: #ff00ff;
+  symbol-stroke-width: 3;
+  z-index: 40;
+}
+
+node[kind=seed][change][setting("labels")] {
+  text: "change";
+  font-size: 11;
+  text-color: #303030;
+  text-halo-color: #ffffff;
+  text-halo-radius: 2;
+  text-offset-y: 13;
+}
+
+/* ------------------------------------------------------- checkFile findings */
+
+/* Anything checkFile tagged. Last in the file so it wins over the kind- and change- rules above:
+   a flagged point must be findable at any zoom, whatever it is underneath. Filter `fixme=*`. */
+node[fixme] {
+  symbol-shape: triangle;
+  symbol-size: 18;
+  symbol-fill-color: #ff1f5a;
+  symbol-fill-opacity: 0.95;
+  symbol-stroke-color: #ffff00;
+  symbol-stroke-width: 3;
+  z-index: 50;
+}
+
+/* A neighbouring municipality's house swallowed by a precinct — the border reaches too far out. */
+node[kind=neighbour][fixme] {
+  symbol-shape: square;
+  symbol-size: 18;
+  symbol-fill-color: #ff8c00;
+}
+
+way[kind=okrsok][fixme], relation[kind=okrsok][fixme] > way {
+  color: #ff1f5a;
+  width: 5;
+  dashes: 9, 5;
+  z-index: 15;
+}
+
+node[fixme][setting("labels")] {
+  text: "fixme";
+  font-size: 11;
+  text-color: #8a0030;
+  text-halo-color: #ffffff;
+  text-halo-radius: 2;
+  text-offset-y: 15;
+}
