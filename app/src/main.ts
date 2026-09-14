@@ -680,8 +680,28 @@ map.on("load", () => {
   const panel = document.createElement("div");
   panel.className = "layer-panel";
 
+  // Source first, and deliberately so: it is the control you come back to most, and anything
+  // above it moves it. The legend under "Farbenie" is one line for "Rozlíšenie okrskov" and
+  // several for a result choropleth, and the whole Farbenie block disappears when Flourish is
+  // active — so with the source switcher below it, picking a source or a colouring shifted the
+  // very radios you were aiming at. At the top it never moves.
+  const layerSection = document.createElement("div");
+  const layerOpts: [string, Which][] = [
+    ["naše okrsky", "ours"],
+    ["Flourish okrsky (2023)", "flourish"],
+  ];
+
+  for (const [label, which] of layerOpts) {
+    layerSection.append(
+      makeRadio("okrsky-layer", label, which === active, () => setActive(which)),
+    );
+  }
+
+  panel.append(layerSection);
+
   // Coloring mode — hidden entirely when the Flourish layer is active.
   colorSectionEl = document.createElement("div");
+  colorSectionEl.className = "panel-group";
   colorSectionEl.append(makeTitle("Farbenie"));
 
   const colorOpts: [string, ColorMode][] = [
@@ -705,18 +725,6 @@ map.on("load", () => {
 
   colorSectionEl.style.display = active === "flourish" ? "none" : "";
   panel.append(colorSectionEl);
-
-  // Layer choice (our derived okrsky vs the throwaway Flourish reference).
-  const layerOpts: [string, Which][] = [
-    ["naše okrsky", "ours"],
-    ["Flourish okrsky (2023)", "flourish"],
-  ];
-
-  for (const [label, which] of layerOpts) {
-    panel.append(
-      makeRadio("okrsky-layer", label, which === active, () => setActive(which)),
-    );
-  }
 
   // Seeds — an independent overlay on top of whichever okrsky layer.
   const seedRow = document.createElement("label");
