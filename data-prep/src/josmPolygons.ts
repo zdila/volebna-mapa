@@ -66,18 +66,38 @@ export const loadPolygons = (fc: { features: Feature[] }, mc: string, db: string
       const ps = gs
         .map((g) => `st_transform(st_setsrid(st_geomfromgeojson(${lit(g)}),4326),5514)`)
         .join(",");
-      // st_collect of a MultiPolygon part with a Polygon part yields a GEOMETRYCOLLECTION, and
-      // st_makevalid turns a self-intersecting ring into polygons plus dangling lines — extract
-      // the polygonal components so the column type holds. Validity is judged on `raw`.
+      // TWO geometries per precinct, and the difference matters.
+      //
+      // `raw` is st_collect — the parts exactly as drawn. Faults are judged on it, because
+      // collecting is what exposes them: parts that overlap or share an edge make the collection
+      // invalid even though each way is fine on its own.
+      //
+      // `geom` is what containment is tested against, and it is st_UNION, not st_collect. Union
+      // dissolves overlapping parts into one valid area; collect keeps them as separate
+      // components, and a MultiPolygon whose components overlap is invalid — whereupon every
+      // `st_isvalid(...) and st_contains(...)` test skips the precinct and reports EVERY address
+      // in it as outside all precincts. That turned 5 broken precincts into 803 phantom orphans
+      // and buried the real finding.
+      //
+      // st_makevalid still guards the self-intersecting case (it turns a crossed ring into
+      // polygons plus dangling lines, so extract the polygonal components to keep the column type).
       const raw = gs.length > 1 ? `st_collect(array[${ps}])` : ps;
-      return `(${lit(mcn)}, ${okrsok}, st_multi(st_collectionextract(st_makevalid(${raw}), 3)), ${raw})`;
+      return `(${lit(mcn)}, ${okrsok}, ${raw})`;
     })
     .join(",\n");
 
   execFileSync("psql", [db, "-v", "ON_ERROR_STOP=1", "-q"], {
     input: `drop table if exists _check_poly;
-            create table _check_poly (mcnorm text, okrsok int, geom geometry(MultiPolygon,5514), raw geometry);
-            insert into _check_poly values ${values};
+            create table _check_poly (mcnorm text, okrsok int, raw geometry, geom geometry(MultiPolygon,5514));
+            insert into _check_poly (mcnorm, okrsok, raw) values ${values};
+            -- Order matters. st_makevalid FIRST, because st_unaryunion throws a
+            -- TopologyException on a self-intersecting ring; then st_unaryunion, which dissolves
+            -- overlapping parts into one area (st_makevalid alone leaves them as separate
+            -- components, and a MultiPolygon whose components overlap is invalid). Done in place
+            -- so the geometry text appears once in the statement, not twice.
+            update _check_poly
+               set geom = st_multi(st_collectionextract(
+                            st_unaryunion(st_collectionextract(st_makevalid(raw), 3)), 3));
             create index on _check_poly using gist(geom);
             drop table if exists _check_part;
             create table _check_part (idx int, mcnorm text, okrsok int, g geometry);

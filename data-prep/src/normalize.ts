@@ -52,6 +52,11 @@ const STREET_FIX: Record<string, string> = {
   "laury henckel": "laury henckelovej",
   //                              Bratislava-Rusovce — the decree drops the feminine ending,
   //                              "Laury Henckel"; RA has "Laury Henckelovej". Only one match.
+  vlastenecke: "vlastenecke namestie",
+  //                              Bratislava-Petržalka — the decree's table column is narrow and
+  //                              writes the square as bare "VLASTENECKÉ"; RA has "Vlastenecké
+  //                              námestie". Only one street in the MČ starts that way, and the
+  //                              polling place for okrsky 11-14 is "ZŠI Vlastenecké nám. 1".
   // NB: do NOT map "brigadnnicka"→"brigadnicka" — Západ's assignment has *both* spellings on
   // different okrsky (9 vs 10) with overlapping numbers, so merging them creates a real collision.
 };
