@@ -21,7 +21,8 @@
 // ⚠️ Save and close the file in JOSM first — JOSM holds its own copy in memory and will overwrite
 // this on its next save.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { backupFile } from "./fileBackup.ts";
 
 const DB = "volebna";
 // stderr dropped: this database emits a "collation version mismatch" WARNING on every connection.
@@ -38,7 +39,7 @@ if (!mc || mc.startsWith("--")) {
   process.exit(1);
 }
 const dryRun = process.argv.includes("--dry-run");
-const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `data/edit/${mc}.geojson`;
+const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `edit/${mc}.geojson`;
 
 const hasMcnorm =
   q(`select 1 from information_schema.columns where table_schema='public'
@@ -140,8 +141,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-const bak = `${file}.bak-${new Date().toISOString().replace(/[:.]/g, "").slice(0, 17)}`;
-copyFileSync(file, bak);
+const bak = backupFile(file);
 writeFileSync(file, JSON.stringify(fc));
 console.log(`\nbackup: ${bak}`);
 console.log(`updated in place. In JOSM: reload the file, then filter  change=*  to see the delta.`);

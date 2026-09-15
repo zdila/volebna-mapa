@@ -18,7 +18,8 @@
 // Get the ring file first (bbox of the precincts plus a margin):
 //   node --experimental-strip-types src/fetchRa.ts "<minx miny maxx maxy>" data/ra_kosice_ring.geojson
 import { execFileSync } from "node:child_process";
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { backupFile } from "./fileBackup.ts";
 import { loadPolygons, lit, type Feature } from "./josmPolygons.ts";
 
 const DB = "volebna";
@@ -50,7 +51,7 @@ const ringIdx = argv.indexOf("--ring");
 const ring = ringIdx >= 0 ? argv[ringIdx + 1] : `data/ra_${mc}_ring.geojson`;
 const file =
   argv.slice(1).find((a) => !a.startsWith("--") && a !== ring && a !== boundary) ??
-  `data/edit/${mc}.geojson`;
+  `edit/${mc}.geojson`;
 
 const fc = JSON.parse(readFileSync(file, "utf8")) as { features: Feature[] };
 
@@ -64,8 +65,7 @@ const save = () => {
     console.log("\n--dry-run: file not modified.");
     return;
   }
-  const bak = `${file}.bak-${new Date().toISOString().replace(/[:.]/g, "").slice(0, 17)}`;
-  copyFileSync(file, bak);
+  const bak = backupFile(file);
   writeFileSync(file, JSON.stringify(fc));
   console.log(`\nbackup: ${bak}\nupdated.`);
 };

@@ -41,7 +41,8 @@
 //
 // ⚠️ Save and close the file in JOSM first — JOSM keeps its own copy in memory.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { backupFile } from "./fileBackup.ts";
 import { readdirSync } from "node:fs";
 import { loadPolygons, lit, polyKey, type Feature } from "./josmPolygons.ts";
 import { norm, streetKey } from "./normalize.ts";
@@ -59,7 +60,7 @@ if (!mc || mc.startsWith("--")) {
   process.exit(1);
 }
 const dryRun = process.argv.includes("--dry-run");
-const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `data/edit/${mc}.geojson`;
+const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `edit/${mc}.geojson`;
 
 const fc = JSON.parse(readFileSync(file, "utf8")) as { features: Feature[] };
 
@@ -408,8 +409,7 @@ if (dryRun) {
   console.log("\n--dry-run: file not modified.");
   process.exit(0);
 }
-const bak = `${file}.bak-${new Date().toISOString().replace(/[:.]/g, "").slice(0, 17)}`;
-copyFileSync(file, bak);
+const bak = backupFile(file);
 writeFileSync(file, JSON.stringify(fc));
 console.log(`\nbackup: ${bak}`);
 console.log(`updated. In JOSM reload, then filter  fixme=*  (and  change=*  for what moved).`);

@@ -68,7 +68,7 @@ psql volebna -c "drop table if exists before_seeds_kosice;
 psql volebna -c "drop table if exists before_unmatched_kosice;
                  create table before_unmatched_kosice as select * from unmatched_kosice;"
 # ... re-run the parsers and labelKosice ...
-node src/exportSeedDiff.ts kosice     # -> data/edit/kosice_seed_diff.geojson
+node src/exportSeedDiff.ts kosice     # -> edit/kosice_seed_diff.geojson
 ```
 
 Open it as a SECOND JOSM layer next to the file you are editing — it touches nothing in yours.

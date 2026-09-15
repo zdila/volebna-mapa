@@ -2,7 +2,7 @@
 //
 //   node src/importOkrskyJosm.ts <mc> [file.geojson] [--replace] [--all] [--dry-run]
 //     node src/importOkrskyJosm.ts lamac
-//     node src/importOkrskyJosm.ts kosice data/edit/kosice_zapad.geojson
+//     node src/importOkrskyJosm.ts kosice edit/kosice_zapad.geojson
 //
 // Edits land in the **`manual` schema** (`manual.okrsky_<mc>`), NOT in `okrsky_<mc>`. That is the
 // whole point: `okrsky_<mc>` is machine output and any re-derivation (rebuild.sh, a new source
@@ -45,7 +45,7 @@ if (!mc || mc.startsWith("--")) {
 const replace = argv.includes("--replace");
 const importAll = argv.includes("--all");
 const dryRun = argv.includes("--dry-run");
-const file = argv.slice(1).find((a) => !a.startsWith("--")) ?? `data/edit/${mc}.geojson`;
+const file = argv.slice(1).find((a) => !a.startsWith("--")) ?? `edit/${mc}.geojson`;
 
 const hasMcnorm =
   q(`select 1 from information_schema.columns where table_schema='public'

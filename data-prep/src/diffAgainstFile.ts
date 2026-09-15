@@ -1,8 +1,8 @@
 // Diff the CURRENT database against a JOSM working file, rather than against a DB checkpoint.
 //
 //   node src/diffAgainstFile.ts <mc> [file.geojson]
-//     node src/diffAgainstFile.ts kosice                    # -> data/edit/kosice.geojson
-//     node src/diffAgainstFile.ts kosice data/edit/kosice_zapad.geojson
+//     node src/diffAgainstFile.ts kosice                    # -> edit/kosice.geojson
+//     node src/diffAgainstFile.ts kosice edit/kosice_zapad.geojson
 //
 // Writes <file>_changes.geojson holding only the address points whose okrsok differs from what
 // that file already shows.
@@ -34,7 +34,7 @@ if (!mc) {
   console.error("usage: node src/diffAgainstFile.ts <mc> [file.geojson]");
   process.exit(1);
 }
-const file = process.argv[3] ?? `data/edit/${mc}.geojson`;
+const file = process.argv[3] ?? `edit/${mc}.geojson`;
 
 const hasMcnorm =
   q(`select 1 from information_schema.columns where table_schema='public'

@@ -12,7 +12,8 @@
 //
 // ⚠️ Save and close the file in JOSM first.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { backupFile } from "./fileBackup.ts";
 
 const DB = "volebna";
 const q = (sql: string) =>
@@ -26,7 +27,7 @@ if (!mc || mc.startsWith("--")) {
   process.exit(1);
 }
 const dryRun = process.argv.includes("--dry-run");
-const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `data/edit/${mc}.geojson`;
+const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `edit/${mc}.geojson`;
 
 type Feature = { type: string; properties?: Record<string, unknown>; geometry?: unknown };
 const fc = JSON.parse(readFileSync(file, "utf8")) as { features: Feature[] };
@@ -77,7 +78,6 @@ if (dryRun) {
   console.log("\n--dry-run: file not modified.");
   process.exit(0);
 }
-const bak = `${file}.bak-${new Date().toISOString().replace(/[:.]/g, "").slice(0, 17)}`;
-copyFileSync(file, bak);
+const bak = backupFile(file);
 writeFileSync(file, JSON.stringify(fc));
 console.log(`\nbackup: ${bak}\nupdated. In JOSM reload, then filter  change=restored`);

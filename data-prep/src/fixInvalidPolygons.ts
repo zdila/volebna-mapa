@@ -23,7 +23,8 @@
 // minus the fold. Every repaired feature is tagged `fixed=<what was done>` so you can filter to
 // them in JOSM and check the result. Run checkFile afterwards.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { backupFile } from "./fileBackup.ts";
 
 const DB = "volebna";
 const q = (sql: string) =>
@@ -38,7 +39,7 @@ if (!mc || mc.startsWith("--")) {
   process.exit(1);
 }
 const dryRun = process.argv.includes("--dry-run");
-const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `data/edit/${mc}.geojson`;
+const file = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? `edit/${mc}.geojson`;
 
 type Feature = { properties?: Record<string, unknown>; geometry?: { type: string; coordinates?: unknown } };
 const fc = JSON.parse(readFileSync(file, "utf8")) as { features: Feature[] };
@@ -210,9 +211,6 @@ console.log(`  features rewritten             : ${changed}`);
 console.log(`  features removed by merging    : ${dropped}`);
 
 if (dryRun) { console.log("\n--dry-run: file not modified."); process.exit(0); }
-// Seconds included: two tools writing in the same minute would otherwise share a backup name and
-// the second would overwrite the first — which happened, and cost the only pre-repair snapshot.
-const bak = `${file}.bak-${new Date().toISOString().replace(/[:.]/g, "").slice(0, 17)}`;
-copyFileSync(file, bak);
+const bak = backupFile(file);
 writeFileSync(file, JSON.stringify(fc));
 console.log(`\nbackup: ${bak}\nupdated. Reload in JOSM, then run checkFile.`);

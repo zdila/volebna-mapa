@@ -6,7 +6,7 @@
 //     node src/exportOkrskyJosm.ts kosice --mc zapad
 //     node src/exportOkrskyJosm.ts petrzalka --okrsok 12,13,14
 //
-// Writes data/edit/<name>.geojson (WGS84). Everything carries a `kind` tag so JOSM's filters can
+// Writes edit/<name>.geojson (WGS84). Everything carries a `kind` tag so JOSM's filters can
 // show/hide each layer independently:
 //
 //   kind=okrsok      the polygon (src=derived | manual)
@@ -141,9 +141,9 @@ const seeds = pointRows(`seeds_${mc}`, "seed", "'okrsok', t.okrsok,");
 const unmatched = onlyOkrsok ? [] : pointRows(`unmatched_${mc}`, "unmatched", "'reason', t.reason,");
 
 const features = [...polys, ...seeds, ...unmatched];
-mkdirSync("data/edit", { recursive: true });
+mkdirSync("edit", { recursive: true });
 const name = onlyMc ? `${mc}_${onlyMc.replace(/\s+/g, "_")}` : mc;
-const out = `data/edit/${name}.geojson`;
+const out = `edit/${name}.geojson`;
 writeFileSync(out, JSON.stringify({ type: "FeatureCollection", features }));
 
 console.log(`wrote ${out}`);

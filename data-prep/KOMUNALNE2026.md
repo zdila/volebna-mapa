@@ -222,6 +222,12 @@ same `volby.statistics.sk` shape as `src/loadRef2026.sql` handles).
 
 ## Hand-editing polygons in JOSM
 
+The working files live in `data-prep/edit/` and ARE version-controlled — they hold hand-drawn
+geometry that cannot be re-derived. Their timestamped `.bak-*` copies are not: every check and
+every apply writes one, each is tens of megabytes, and git already holds the history they
+approximate. Those go to `data/edit-backups/`, inside the wholesale-ignored `data/`.
+
+
 The derived Voronoi shapes are a good approximation, not the legal boundary. To finish one by
 hand:
 
@@ -229,7 +235,7 @@ hand:
 node src/exportOkrskyJosm.ts lamac              # whole MČ
 node src/exportOkrskyJosm.ts kosice --mc zapad  # one Košice mestská časť
 node src/exportOkrskyJosm.ts petrzalka --okrsok 12,13,14
-#   -> data/edit/<name>.geojson   ... edit in JOSM, File > Save As over the same file
+#   -> edit/<name>.geojson   ... edit in JOSM, File > Save As over the same file
 node src/importOkrskyJosm.ts lamac
 ./buildOkrskyTiles.sh
 ```
